@@ -1,0 +1,44 @@
+/* 第一版手册动画所需的样式 */
+/* 动画演示 */
+.chip .anim{font-size:9px;color:var(--gc);opacity:.8}
+.vz{border:1px solid var(--line);border-radius:12px;padding:14px;background:color-mix(in srgb,var(--dc) 5%,var(--panel));display:grid;gap:10px;min-width:0}
+.vz .vsvg{width:100%;height:auto;display:block}
+.vz text{font-family:var(--f-body)}
+.vz .ti{fill:var(--ink);font-size:13px}.vz .ts{fill:var(--ink);font-size:11px}.vz .tm{fill:var(--muted);font-size:11px}.vz .tw{fill:var(--panel);font-size:14px}
+.vz .fp{fill:var(--panel)}.vz .fa{fill:var(--dc)}.vz .fa2{fill:color-mix(in srgb,var(--dc) 16%,var(--panel))}.vz .fb{fill:var(--c-arch)}.vz .fo{fill:var(--c-app)}.vz .fok{fill:var(--ok-soft)}.vz .fm{fill:var(--muted)}
+.vz .sl{stroke:var(--line)}.vz .sm{stroke:var(--muted)}.vz .sa{stroke:var(--dc)}.vz .sr{stroke:var(--c-safe)}.vz .so{stroke:var(--c-app)}.vz .sok{stroke:var(--ok)}
+.vrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.vstat{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.vstat b{color:var(--ink);font-weight:500}
+.detail .vnote{font-size:13px;color:var(--muted);margin:0;line-height:1.65}
+.vgrid{display:grid;grid-template-columns:auto minmax(0,1fr) 3em;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.vz input[type=range]{accent-color:var(--dc);width:100%}
+.vz .btn.is{background:var(--dc);border-color:var(--dc);color:var(--panel)}
+.vz .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle}
+.vz .dot.db{background:var(--c-arch)}.vz .dot.ring{border:2px solid var(--c-app)}
+.vz .ed{transition:stroke .3s}.vz .ed.lit{stroke:var(--dc);stroke-width:1.6}.vz .ed.litr{stroke:var(--c-safe);stroke-width:1.6}
+.vz .nd{transition:fill .3s}.vz .nd.lit{fill:var(--dc)}.vz .nd.litr{fill:var(--c-safe)}
+.vz .fa2{transition:fill .25s}.vz .fa2.lit{fill:color-mix(in srgb,var(--dc) 45%,var(--panel))}
+.vz .e{transition:stroke .25s}.vz .e.lit{stroke:var(--dc);stroke-width:2.5}
+.vz .lgn rect{transition:fill .25s}.vz .lgn.lit rect{fill:color-mix(in srgb,var(--dc) 28%,var(--panel))}
+.vz .pill{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid var(--line);font-size:13px;transition:all .25s}
+.vz .pill.lit{background:var(--dc);border-color:var(--dc);color:var(--panel)}
+.vcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.vpane{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);min-width:0}
+.vph{font-size:12px;color:var(--faint);letter-spacing:.06em;margin-bottom:4px}
+.vpt{min-height:5.5em;font-size:14px;line-height:1.7}
+.vlog{display:grid;gap:6px}
+.vlog .li{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.6;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;animation:vin .3s ease-out}
+.vlog .tag{font-size:11.5px;padding:1px 8px;border-radius:6px;white-space:nowrap;background:color-mix(in srgb,var(--tc,var(--dc)) 15%,transparent);color:var(--tc,var(--dc))}
+@keyframes vin{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
+.vstate pre{font-size:12px}.vstate .chg{color:var(--dc);font-weight:500}
+.tkn{display:inline-flex;flex-direction:column;align-items:center;margin:3px;padding:5px 9px;border-radius:7px;font-size:15px;animation:vin .3s ease-out both}
+.tkn small{font-family:var(--f-mono);font-size:10.5px;opacity:.8}
+.hbar{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.hbar .tr{flex:1;height:12px;border-radius:4px;background:var(--line);overflow:hidden}
+.hbar .tr i{display:block;height:100%;background:var(--dc);transition:width .35s}
+.hbar .nm{min-width:4.5em}.hbar .pc{min-width:3.5em;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.ck{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:13px;transition:opacity .4s,background .4s}
+.ck.hit{border-color:var(--ok);background:var(--ok-soft)}.ck.miss{opacity:.4}
+.ck .sc{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);min-width:2.6em}
+.ck .tg2{margin-left:auto;font-size:11px;padding:1px 8px;border-radius:6px;white-space:nowrap}
+.ck.gone{display:none}

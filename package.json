@@ -1,0 +1,20 @@
+{
+  "name": "ai-handbook",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/inline.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3-force": "3.0.0",
+    "marked": "18.1.0",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
+    "vite": "8.3.4"
+  }
+}

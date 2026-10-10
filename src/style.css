@@ -1,0 +1,142 @@
+/* 布局：顶栏（视图切换 + 搜索）→ 学习主线 → 列表视图（概念目录 | 详情）或 地图视图（力导向图 | 节点详情） */
+:root{
+  --bg:#F3F5F8; --panel:#FFFFFF; --ink:#17202C; --muted:#5A6577; --faint:#8A94A5; --line:#DCE1E8;
+  --accent:#2B58CF; --accent-soft:#E5EBFA;
+  --c-base:#5B6B82; --c-arch:#2B58CF; --c-train:#7646C9; --c-deploy:#0F7F86; --c-app:#B35314; --c-agent:#A03A73; --c-frame:#2F7A3A; --c-safe:#B4302B;
+  --code-bg:#F0F2F6; --ok:#2F7A3A; --ok-soft:#E3F1E5; --warn:#C98A1B;
+  --f-display:"Noto Serif SC","Songti SC","STSong",serif;
+  --f-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E131A; --panel:#151C26; --ink:#E5EAF1; --muted:#9AA6B7; --faint:#6E7A8C; --line:#28313E;
+  --accent:#86A6FF; --accent-soft:#1C2742;
+  --c-base:#9AA9BF; --c-arch:#86A6FF; --c-train:#B898F2; --c-deploy:#4FC5CB; --c-app:#F0985A; --c-agent:#E58BBE; --c-frame:#7FCB8A; --c-safe:#F07D77;
+  --code-bg:#0F151E; --ok:#7FCB8A; --ok-soft:#18301D; --warn:#E3B04F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131A; --panel:#151C26; --ink:#E5EAF1; --muted:#9AA6B7; --faint:#6E7A8C; --line:#28313E;
+  --accent:#86A6FF; --accent-soft:#1C2742;
+  --c-base:#9AA9BF; --c-arch:#86A6FF; --c-train:#B898F2; --c-deploy:#4FC5CB; --c-app:#F0985A; --c-agent:#E58BBE; --c-frame:#7FCB8A; --c-safe:#F07D77;
+  --code-bg:#0F151E; --ok:#7FCB8A; --ok-soft:#18301D; --warn:#E3B04F; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;padding:0 16px}
+#app{max-width:1280px;margin:0 auto;padding-block:20px 64px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:12.5px;line-height:1.65;margin:0}
+pre code{background:none;padding:0}
+.btn{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 12px;font-size:13px;line-height:1.4}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* 顶栏 */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-bottom:16px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{font-size:28px;letter-spacing:.02em}
+.brand small{color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:3px}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 14px;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--accent);color:var(--panel)}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;min-width:0;flex:0 1 300px}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;color:var(--ink);outline:none}
+.prog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.prog .bar{width:90px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--ok);transition:width .4s}
+
+/* 学习主线 */
+.spine{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.spine .st{flex:1 1 120px;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--panel);text-align:left;transition:border-color .2s,background .2s}
+.spine .st:hover{border-color:var(--sc)}
+.spine .st.on{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 10%,var(--panel))}
+.spine .st b{display:block;font-weight:700;color:var(--sc);font-size:13.5px}
+.spine .st span{display:block;font-size:12px;color:var(--muted);line-height:1.45;margin-top:1px}
+@media (max-width:720px){.spine .st{flex-basis:45%}}
+
+/* 列表视图 */
+.listview{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+@media (max-width:900px){.listview{grid-template-columns:minmax(0,1fr)}}
+.toc{min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:0 0 12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.pr{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+.pr.high{background:var(--c-safe)}.pr.medium{background:var(--warn)}.pr.low{background:var(--faint)}
+.grp{margin-bottom:16px}
+.grp-h{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+.grp-h h2{font-size:16px;color:var(--gc)}
+.grp-h small{font-size:12px;color:var(--faint)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 10px;font-size:13.5px;line-height:1.45;transition:border-color .15s}
+.chip:hover{border-color:var(--gc)}
+.chip.on{border-color:var(--gc);box-shadow:inset 0 0 0 1px var(--gc);color:var(--gc);font-weight:500}
+.chip.done{background:var(--ok-soft)}
+.chip.done::after{content:"✓";font-size:11px;color:var(--ok)}
+.chip .anim{font-size:9px;color:var(--gc);opacity:.8}
+.empty{color:var(--faint);font-size:14px;padding:12px 0}
+
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 28px;min-width:0;max-height:calc(100vh - 28px);overflow:auto}
+@media (max-width:900px){.detail{position:static;max-height:none;padding:22px 18px}}
+.kick{font-size:12px;letter-spacing:.1em;color:var(--dc);font-weight:500}
+.detail h2.ttl{font-size:30px;margin:4px 0 2px}
+.en{font-family:var(--f-mono);font-size:13px;color:var(--faint)}
+.lead{font-size:17px;line-height:1.7;margin:14px 0 4px;padding-left:14px;border-left:3px solid var(--dc)}
+.sec-h{font-family:var(--f-body);font-size:13px;letter-spacing:.12em;color:var(--faint);font-weight:500;margin:22px 0 6px}
+.md p{margin:0 0 10px;max-width:68ch}
+.md ul,.md ol{margin:0 0 10px;padding-left:1.2em}
+.md li{margin:4px 0;max-width:66ch}
+.md blockquote{margin:0 0 10px;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--dc) 8%,transparent);color:var(--ink)}
+.md blockquote p{margin:0}
+.md table{width:100%;border-collapse:collapse;font-size:13.5px}
+.md th,.md td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+.md th{color:var(--muted);font-weight:500}
+.md .tbl{overflow-x:auto}
+.md a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.analogy{background:color-mix(in srgb,var(--dc) 8%,transparent);border-radius:10px;padding:12px 14px;max-width:68ch}
+.analogy p{margin:0}
+.rel{display:flex;flex-wrap:wrap;gap:6px}
+.rel button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px}
+.rel button:hover{border-color:var(--accent);color:var(--accent)}
+.dfoot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+.dfoot .nav{display:flex;gap:8px;flex-wrap:wrap}
+.btn.ok{border-color:var(--ok);color:var(--ok)}
+.btn.ok.is{background:var(--ok);color:var(--panel)}
+.btn.map{border-color:var(--dc);color:var(--dc)}
+
+/* 地图视图 */
+.mapview{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:900px){.mapview{grid-template-columns:minmax(0,1fr)}}
+.mapbox{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.mapbox svg{display:block;width:100%;height:min(72vh,680px);touch-action:none;cursor:grab;user-select:none}
+.mapbox svg.panning{cursor:grabbing}
+.mapbar{position:absolute;left:12px;right:12px;top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none}
+.mapbar > *{pointer-events:auto}
+.gchip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,transparent);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--ink);backdrop-filter:blur(4px)}
+.gchip i{width:8px;height:8px;border-radius:50%;background:var(--gc)}
+.gchip.off{opacity:.4}
+.zoom{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:4px}
+.zoom button{width:32px;height:32px;border:1px solid var(--line);background:var(--panel);border-radius:8px;font-size:15px;line-height:1}
+.maphint{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--faint);pointer-events:none}
+.edge{stroke:var(--line);stroke-width:1.1;transition:stroke .2s,opacity .2s}
+.edge.hl{stroke:var(--accent);stroke-width:1.8}
+.node{cursor:pointer;transition:opacity .2s}
+.node circle{stroke:var(--panel);stroke-width:2}
+.node text{font-size:11px;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.node.sel circle{stroke:var(--ink);stroke-width:2.5}
+.node.done circle{stroke:var(--ok);stroke-width:2.5}
+.dim{opacity:.14}
+.node.match circle{stroke:var(--accent);stroke-width:3}
+
+.mpanel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;min-width:0}
+.mpanel h2{font-size:24px;margin:4px 0 2px}
+.mpanel .lead{font-size:15px}
+.mpanel .nb{display:grid;gap:6px;margin-top:6px}
+.mpanel .nb button{display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 10px;font-size:13.5px}
+.mpanel .nb button:hover{border-color:var(--accent)}
+.mpanel .nb i{width:8px;height:8px;border-radius:50%;flex:none}
+.mpanel .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.mpanel .intro{font-size:14px;color:var(--muted);line-height:1.75}
+.mpanel .intro b{color:var(--ink);font-weight:500}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
