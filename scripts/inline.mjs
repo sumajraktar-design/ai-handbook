@@ -10,7 +10,8 @@ const js = [...html.matchAll(/<script type="module"[^>]*src="\.\/([^"]+\.js)"[^>
 if (!css.length || !js.length) throw new Error('没有在 dist/index.html 里找到构建产物')
 
 const fonts = (html.match(/<link rel="preconnect"[^>]*>|<link rel="stylesheet" href="https:\/\/fonts[^>]*>/g) || []).join('\n')
-const safe = s => s.replace(/<\/script/gi, '<\\/script')
+// 依赖库里有字面量的 U+FFFD（解码失败时的替换字符），改成转义写法，避免被当成损坏的字符
+const safe = s => s.replace(/<\/script/gi, '<\\/script').replace(/�/g, '\\uFFFD')
 const out = `<title>AI 概念手册</title>
 ${fonts}
 <style>${css.join('\n')}</style>
