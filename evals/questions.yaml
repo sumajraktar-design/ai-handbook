@@ -1,0 +1,35 @@
+# 测试问题：用来比较 LLM Wiki 和 RAG 两种方式的回答质量
+# expect：一个好答案应该包含的要点；pages：答案应当引用的概念页
+# 先放 8 题，之后补到 20 题。用户在学习中真正卡住过的问题，最适合加进来。
+
+- q: 为什么同一个问题问 AI 两次，回答会不一样？
+  expect: [模型输出的是下一个词的概率分布, 按温度采样, 温度越高随机性越大]
+  pages: [temperature, token]
+
+- q: 模型和我聊了很久之后为什么会忘记前面说的话？
+  expect: [模型本身没有记忆，每次重新读上下文, 上下文窗口有上限，超出会被删除或压缩, 中间位置的信息容易被忽略]
+  pages: [context-window, lost-in-the-middle, compaction]
+
+- q: 公司文档问答应该用 RAG 还是微调？
+  expect: [灌输知识优先用 RAG, 微调主要改变行为风格, 先试提示词再试 RAG 最后才考虑微调]
+  pages: [prompt-vs-rag-vs-finetune, rag, fine-tuning]
+
+- q: MCP 和 Skill 有什么区别？
+  expect: [MCP 提供连接外部系统的能力, Skill 提供做事的方法, Skill 按需加载节省上下文]
+  pages: [mcp, agent-skills]
+
+- q: 注意力机制和"迷失在中间"有什么关系？
+  expect: [注意力要在越来越多的 Token 之间分配, 中间位置的信息被稀释, 重要信息放在开头或结尾]
+  pages: [attention, lost-in-the-middle]
+
+- q: 什么是幻觉，怎么减轻？
+  expect: [模型预测最像样的词而不是查事实, 用 RAG 或搜索提供资料, 允许模型说不知道, 无法完全消除]
+  pages: [hallucination, rag]
+
+- q: LangChain 和 LangGraph 是什么关系？
+  expect: [LangChain 的 create_agent 运行在 LangGraph 上, LangChain 适合快速起步, LangGraph 适合复杂流程和持久化]
+  pages: [langchain, langgraph]
+
+- q: 为什么不能把权限判断写在 System Prompt 里交给 AI？
+  expect: [文本规则是软约束，不能保证 100%, 可能被越狱或提示注入绕过, 权限要在代码层面实现]
+  pages: [system-prompt, prompt-injection]
