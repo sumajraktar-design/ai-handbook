@@ -1,0 +1,539 @@
+<title>第1课 机器是怎么学会的</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=Ma+Shan+Zheng&display=swap">
+<style>
+/* 版式：16:9 的方格纸舞台按窗口等比缩放；上方画面，下方一行旁白，右上概念卡。单一纸面主题。 */
+:root {
+  --desk: #E4E8E2;
+  --paper: #FBFBF7;
+  --grid: #E8ECE6;
+  --ink: #23272C;
+  --soft: #7A8088;
+  --blue: #2F5BD8;
+  --green: #2C8A57;
+  --orange: #DE7A1E;
+  --red: #CF4339;
+  --cream: #FFF4DA;
+  --display: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --hand: "Ma Shan Zheng", "Kaiti SC", "STKaiti", cursive;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body { background: var(--desk); color: var(--ink); font-family: var(--body); overflow: hidden; }
+#app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding-inline: 16px; padding-block: 12px; box-sizing: border-box; }
+#frame { position: relative; flex: 1 1 auto; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: 0 0; background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px; border-radius: 6px; box-shadow: 0 1px 2px rgba(35,39,44,.08), 0 12px 40px rgba(35,39,44,.12); overflow: hidden; cursor: pointer; user-select: none; }
+.slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
+.slide.on { opacity: 1; visibility: visible; transition: opacity .35s ease; }
+.slide svg { position: absolute; left: 0; top: 0; width: 1280px; height: 600px; overflow: visible; }
+.kicker { position: absolute; left: 48px; top: 30px; font: 500 15px var(--body); letter-spacing: .12em; color: var(--soft); }
+.narr { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; padding-inline: 80px; }
+.narr span { background: #fff; border: 1.5px solid #D9DDD6; border-radius: 10px; padding: 12px 24px; font: 400 25px/1.55 var(--body); max-width: 1060px; text-align: center; text-wrap: balance; box-shadow: 0 2px 0 rgba(35,39,44,.04); }
+.narr span:empty { display: none; }
+.narr span.fade { animation: narrIn .3s ease; }
+@keyframes narrIn { from { opacity: 0; transform: translateY(6px); } }
+.card { position: absolute; right: 26px; top: 22px; width: 380px; background: #fff; border: 1.5px solid #C9D3EE; border-radius: 12px; padding: 14px 18px 16px; opacity: 0; transform: translateY(-8px); transition: opacity .4s, transform .4s; }
+.card.show { opacity: 1; transform: none; }
+.card small { font: 500 13px var(--body); color: var(--soft); letter-spacing: .1em; }
+.card b { display: block; font: 900 28px/1.3 var(--display); color: var(--blue); margin-top: 2px; }
+.card p { margin: 6px 0 0; font: 500 17px/1.5 var(--body); }
+.card p + p { font: 400 15px/1.5 var(--body); color: var(--soft); margin-top: 4px; }
+.aside { position: absolute; left: 30px; top: 70px; width: 760px; height: 470px; border: 2px dashed #B9BEB6; border-radius: 14px; }
+.aside::before { content: "了解即可"; position: absolute; left: 18px; top: -14px; background: var(--paper); border: 1.5px solid #B9BEB6; border-radius: 99px; padding: 2px 12px; font: 500 14px var(--body); color: var(--soft); }
+[data-s] { transition: opacity .45s ease; }
+[data-s].off { opacity: 0; pointer-events: none; }
+.draw { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s ease; }
+.vis .draw, .draw.vis { stroke-dashoffset: 0; }
+[data-tf] { transition: transform .8s cubic-bezier(.3,.7,.3,1); }
+svg text { font-family: var(--body); fill: var(--ink); }
+svg .hand { font-family: var(--hand); }
+svg .disp { font-family: var(--display); font-weight: 900; }
+.ink { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.rough { filter: url(#rough); }
+#bar { flex: none; display: flex; align-items: center; gap: 14px; font: 500 14px var(--body); color: var(--soft); flex-wrap: wrap; justify-content: center; }
+#bar button { font: 500 14px var(--body); color: var(--ink); background: #fff; border: 1.5px solid #CDD2CA; border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+#bar button:hover { border-color: var(--ink); }
+#bar button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+#count { font-variant-numeric: tabular-nums; min-width: 64px; text-align: center; }
+#dots { display: flex; gap: 5px; }
+#dots i { width: 7px; height: 7px; border-radius: 50%; background: #C7CCC4; }
+#dots i.done { background: var(--ink); }
+#hint { color: var(--soft); }
+.slider-ui { position: absolute; left: 70px; top: 470px; width: 300px; display: flex; flex-direction: column; gap: 6px; font: 500 15px var(--body); color: var(--soft); }
+.slider-ui input { width: 100%; accent-color: var(--blue); cursor: grab; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (max-width: 600px) { #hint { display: none; } }
+</style>
+
+<div id="app">
+  <div id="frame"><div id="stage" aria-live="polite"></div></div>
+  <div id="bar">
+    <button id="prev" type="button" aria-label="上一步">← 上一步</button>
+    <span id="count">1 / 19</span>
+    <span id="dots"></span>
+    <button id="next" type="button" aria-label="下一步">下一步 →</button>
+    <button id="fs" type="button">全屏</button>
+    <span id="hint">点画面、空格或 → 前进；← 后退</span>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="rough" filterUnits="userSpaceOnUse" x="-300" y="-300" width="1900" height="1300">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" />
+      <feDisplacementMap in="SourceGraphic" scale="2.6" />
+    </filter>
+    <!-- 学徒：原创角色，圆身子 + 厨师帽 + 小围裙 -->
+    <g id="chef-body">
+      <path class="ink" d="M-13 40 L-14 64 M13 40 L14 64 M-22 64 h12 M10 64 h12" />
+      <path class="ink" d="M-33 2 q-18 10 -20 28 M33 2 q18 10 20 28" />
+      <rect x="-34" y="-30" width="68" height="72" rx="24" fill="#FFF4DA" stroke="#23272C" stroke-width="3" />
+      <path d="M-18 12 h36 v16 q0 8 -8 8 h-20 q-8 0 -8 -8 z" fill="#fff" stroke="#23272C" stroke-width="2.5" />
+      <g stroke="#23272C" stroke-width="6"><circle cx="-16" cy="-56" r="13" /><circle cx="0" cy="-63" r="15" /><circle cx="16" cy="-56" r="13" /></g>
+      <g fill="#fff"><circle cx="-16" cy="-56" r="13" /><circle cx="0" cy="-63" r="15" /><circle cx="16" cy="-56" r="13" /></g>
+      <rect x="-24" y="-48" width="48" height="16" rx="3" fill="#fff" stroke="#23272C" stroke-width="3" />
+    </g>
+    <g id="face-smile">
+      <circle cx="-12" cy="-10" r="3.6" fill="#23272C" /><circle cx="12" cy="-10" r="3.6" fill="#23272C" />
+      <path class="ink" style="stroke-width:2.6" d="M-8 3 Q0 10 8 3" />
+      <ellipse cx="-22" cy="2" rx="5" ry="3" fill="#F2A08E" opacity=".6" /><ellipse cx="22" cy="2" rx="5" ry="3" fill="#F2A08E" opacity=".6" />
+    </g>
+    <g id="face-q">
+      <circle cx="-12" cy="-10" r="3.6" fill="#23272C" /><circle cx="12" cy="-10" r="3.6" fill="#23272C" />
+      <path class="ink" style="stroke-width:2.6" d="M-9 6 q4.5 -4 9 0 q4.5 4 9 0" />
+      <text x="44" y="-44" font-size="34" font-weight="700" style="fill:#DE7A1E">?</text>
+    </g>
+    <g id="face-happy">
+      <path class="ink" style="stroke-width:2.6" d="M-16 -9 q4 -6 8 0 M8 -9 q4 -6 8 0" />
+      <path d="M-9 1 Q0 13 9 1 Z" fill="#23272C" />
+      <ellipse cx="-22" cy="2" rx="5" ry="3" fill="#F2A08E" opacity=".7" /><ellipse cx="22" cy="2" rx="5" ry="3" fill="#F2A08E" opacity=".7" />
+    </g>
+    <g id="face-blind">
+      <rect x="-30" y="-17" width="60" height="13" rx="4" fill="#23272C" />
+      <path class="ink" style="stroke-width:2.6" d="M-7 6 h14" />
+    </g>
+  </defs>
+</svg>
+
+<script>
+(() => {
+'use strict';
+const C = { ink: '#23272C', soft: '#7A8088', blue: '#2F5BD8', green: '#2C8A57', orange: '#DE7A1E', red: '#CF4339', cream: '#FFF4DA' };
+
+// ───── 画图小工具 ─────
+const g = (s, inner, extra = '') => `<g data-s="${s}" ${extra}>${inner}</g>`;
+const chef = (x, y, sc = 1, mood = 'smile') => `<g transform="translate(${x} ${y}) scale(${sc})"><use href="#chef-body"/><use href="#face-${mood}"/></g>`;
+const T = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 20}" ${o.anchor ? `text-anchor="${o.anchor}"` : ''} ${o.cls ? `class="${o.cls}"` : ''} style="fill:${o.c || C.ink};font-weight:${o.w || 400}" ${o.extra || ''}>${t}</text>`;
+const line = (x1, y1, x2, y2, c = C.ink, w = 3, extra = '') => `<path class="ink rough" d="M${x1} ${y1} L${x2} ${y2}" style="stroke:${c};stroke-width:${w}" ${extra}/>`;
+const arrow = (x1, y1, x2, y2, c = C.ink, w = 3) => {
+  const a = Math.atan2(y2 - y1, x2 - x1), L = 12;
+  const p = (d) => `${x2 - L * Math.cos(a + d)} ${y2 - L * Math.sin(a + d)}`;
+  return `<path class="ink rough" style="stroke:${c};stroke-width:${w}" d="M${x1} ${y1} L${x2} ${y2} M${p(.45)} L${x2} ${y2} L${p(-.45)}"/>`;
+};
+const tag = (x, y, t, c = C.blue, fs = 17, anchor = 'start') => {
+  const w = [...t].reduce((s, ch) => s + (/[\x00-\x7f]/.test(ch) ? fs * .58 : fs), 0) + 26;
+  const x0 = anchor === 'middle' ? x - w / 2 : x;
+  return `<g><rect x="${x0}" y="${y - fs - 6}" width="${w}" height="${fs + 16}" rx="${(fs + 16) / 2}" fill="#fff" stroke="${c}" stroke-width="1.6"/>${T(x0 + 13, y + 1, t, { fs, c, w: 500 })}</g>`;
+};
+const box = (x, y, w, h, c = C.ink, fill = '#fff', extra = '') => `<rect class="rough" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${c}" stroke-width="2.6" ${extra}/>`;
+// 盘子：v 决定菜的花样，不同花样代表不同做法
+const dish = (x, y, c = C.ink, v = 0, w = 96) => {
+  const rx = w / 2, ry = w / 6.4;
+  const food = [
+    `<path d="M${x - 16} ${y - 4} h8 v6 h-8z M${x - 4} ${y - 4} h8 v6 h-8z M${x + 8} ${y - 4} h8 v6 h-8z" fill="none" stroke="${c}" stroke-width="1.8"/>`,
+    `<circle cx="${x - 12}" cy="${y - 1}" r="4" fill="none" stroke="${c}" stroke-width="1.8"/><circle cx="${x}" cy="${y - 1}" r="4" fill="none" stroke="${c}" stroke-width="1.8"/><circle cx="${x + 12}" cy="${y - 1}" r="4" fill="none" stroke="${c}" stroke-width="1.8"/>`,
+    `<path d="M${x - 18} ${y + 1} q9 -10 18 0 q9 10 18 0" fill="none" stroke="${c}" stroke-width="1.8"/>`,
+    `<path d="M${x - 14} ${y + 3} l6 -8 l5 7 l6 -9 l5 8 l6 -6" fill="none" stroke="${c}" stroke-width="1.8"/>`,
+  ][v % 4];
+  return `<g class="rough"><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" stroke="${c}" stroke-width="2.6"/><ellipse cx="${x}" cy="${y}" rx="${rx * .66}" ry="${ry * .62}" fill="none" stroke="${c}" stroke-width="1.6"/>${food}</g>`;
+};
+// 仪器（表盘）：指针按 data-tf 旋转，0° 指向 0，180° 指向“高”
+const gauge = (x, y, r, rot, label = '仪器') => {
+  let ticks = '';
+  for (let i = 0; i <= 8; i++) {
+    const a = Math.PI + Math.PI * i / 8, c = i < 2 ? C.green : i > 6 ? C.red : C.ink;
+    ticks += `<path d="M${x + Math.cos(a) * r * .86} ${y + Math.sin(a) * r * .86} L${x + Math.cos(a) * r} ${y + Math.sin(a) * r}" stroke="${c}" stroke-width="2.4"/>`;
+  }
+  return `<g><path class="ink rough" d="M${x - r} ${y} A${r} ${r} 0 0 1 ${x + r} ${y}"/>${line(x - r - 14, y, x + r + 14, y, C.ink, 2.6)}${ticks}
+    <path d="M${x} ${y} L${x - r * .78} ${y}" stroke="${C.red}" stroke-width="4" stroke-linecap="round" data-tf="${rot}" style="transform-origin:${x}px ${y}px"/>
+    <circle cx="${x}" cy="${y}" r="6" fill="${C.ink}"/>
+    ${T(x - r, y + 26, '0', { fs: 15, c: C.green, anchor: 'middle' })}${T(x + r, y + 26, '高', { fs: 15, c: C.red, anchor: 'middle' })}${T(x, y + 26, label, { fs: 15, c: C.soft, anchor: 'middle' })}</g>`;
+};
+// 竖直推子：knob 按 data-tf 上下移动
+const slider = (x, y, h, label, tf, val = '') => `<g>${line(x, y, x, y + h, C.ink, 3)}<circle cx="${x}" cy="${y + h / 2}" r="11" fill="${C.blue}" data-tf="${tf}"/>${T(x, y + h + 30, label, { fs: 19, anchor: 'middle', w: 500 })}${val ? T(x, y + h + 52, val, { fs: 15, c: C.blue, anchor: 'middle' }) : ''}</g>`;
+const rot = (v) => `rotate(${Math.round(v * 180)}deg)`;
+const pathFrom = (f, x0, x1, n = 80) => { let d = ''; for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n; d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + f(x).toFixed(1); } return d; };
+
+// ───── 课件内容：steps 是每次点击出现的一句旁白；画面元素用 data-s 指定第几步出现 ─────
+const S = [];
+
+S.push({ kicker: '', steps: [''], svg: `
+  ${T(640, 190, '第 1 课', { fs: 30, c: C.soft, anchor: 'middle' })}
+  ${T(640, 285, '机器是怎么学会的', { fs: 76, anchor: 'middle', cls: 'disp' })}
+  <path class="ink rough" d="M352 320 Q640 334 928 316" style="stroke:${C.blue};stroke-width:6"/>
+  ${T(640, 380, '一个学徒学做菜的故事', { fs: 30, c: C.soft, anchor: 'middle' })}
+  ${chef(640, 500, 1.15, 'happy')}
+  ${T(640, 590, '点一下画面开始', { fs: 18, c: C.soft, anchor: 'middle' })}` });
+
+S.push({ kicker: '开场', steps: [
+  'Claude、ChatGPT 这些 AI，看起来像在思考。',
+  '其实它只做一件事：根据前面的字，猜下一个字。',
+  '给它半句话：红烧肉要先把糖炒出……',
+  '它给每个可能的字打一个把握：接“色”最有把握，接“来”小一些。',
+  '选一个接上，再猜下一个。每个回答，都是这样一个字一个字猜出来的。'], svg: `
+  ${g('0-1', `${box(340, 120, 600, 170)}<path class="ink rough" d="M420 290 l-30 44 l70 -44" fill="#FBFBF7"/>
+    <circle cx="590" cy="205" r="9" fill="${C.soft}"/><circle cx="640" cy="205" r="9" fill="${C.soft}"/><circle cx="690" cy="205" r="9" fill="${C.soft}"/>
+    ${T(640, 262, 'AI 正在回答……', { fs: 18, c: C.soft, anchor: 'middle' })}`)}
+  ${g('1-1', `${T(640, 420, '根据前面的字，猜下一个字', { fs: 44, anchor: 'middle', w: 700 })}<path class="ink rough" d="M370 440 Q640 452 910 436" style="stroke:#F2C230;stroke-width:9;opacity:.8"/>`)}
+  ${g('2', `${T(250, 130, '红烧肉要先把糖炒出', { fs: 50, w: 700 })}`)}
+  ${g('4', `${T(700, 130, '色，再放五花肉……', { fs: 50, w: 700, c: C.blue })}`)}
+  ${g('3', [['色', 58], ['来', 18], ['焦', 10], ['香', 8], ['泡', 6]].map(([ch, p], i) => {
+    const y = 200 + i * 62, w = p * 7.5;
+    return `${T(300, y + 28, ch, { fs: 30, w: 700, anchor: 'middle', c: i ? C.ink : C.blue })}
+      <rect class="rough" x="340" y="${y + 4}" width="${w}" height="34" rx="4" fill="${i ? '#EEF0EC' : '#DDE6FB'}" stroke="${i ? C.ink : C.blue}" stroke-width="2.2"/>
+      ${T(352 + w, y + 29, p + '%', { fs: 20, c: C.soft })}`;
+  }).join(''))}` });
+
+S.push({ kicker: '这节课的问题', card: ['对应关系', '点单 = 前面的字', '学徒做出的菜 = 模型猜的下一个字'], cardAt: 2, steps: [
+  '这节课只回答一个问题：它是怎么学会猜得这么准的？',
+  '我们请一个学徒，看它怎么学做菜。',
+  '客人的点单，相当于前面的字；',
+  '学徒做出的菜，相当于模型猜的下一个字。'], svg: `
+  ${T(70, 130, '它是怎么学会猜得这么准的？', { fs: 40, w: 700 })}
+  ${g('1', chef(560, 360, 1.3))}
+  ${g('2', `${box(180, 270, 150, 190)}${T(255, 310, '点单', { fs: 24, w: 700, anchor: 'middle' })}
+    ${line(205, 345, 305, 345, C.soft, 2)}${line(205, 375, 305, 375, C.soft, 2)}${line(205, 405, 290, 405, C.soft, 2)}
+    ${arrow(345, 365, 470, 365)}${T(255, 500, '= 前面的字', { fs: 24, w: 700, c: C.blue, anchor: 'middle' })}`)}
+  ${g('3', `${arrow(650, 380, 770, 410)}${dish(880, 420, C.ink, 0, 170)}${T(880, 500, '= 模型猜的下一个字', { fs: 24, w: 700, c: C.blue, anchor: 'middle' })}`)}` });
+
+S.push({ kicker: '第一节 · 写规则行不通', card: ['规则式 AI', '人把规则一条条写进程序', '大模型里：说话的组合无穷无尽，规则永远写不完'], cardAt: 4, steps: [
+  '最直接的办法，是给学徒一本超级菜谱。',
+  '红烧肉放 15 克糖、炖 40 分钟……一条条写清楚。',
+  '可是肉有多有少，锅有大有小，四川人爱辣，广东人爱清淡。',
+  '情况无穷无尽，菜谱永远写不完。',
+  '这就是早期的规则式 AI：把语言规则写进程序。可说话的组合无穷无尽，这条路走不通。'], svg: `
+  ${chef(150, 430, 1.1, 'smile')}
+  <path class="ink rough" d="M300 210 Q420 190 540 214 L540 520 Q420 496 300 516 Z M540 214 Q660 190 780 210 L780 516 Q660 496 540 520" fill="#fff"/>
+  ${T(540, 180, '超级菜谱', { fs: 26, w: 700, anchor: 'middle' })}
+  ${g('1', `${T(322, 262, '红烧肉：糖 15 克', { fs: 19 })}${T(322, 296, '炖 40 分钟', { fs: 19 })}${T(322, 330, '先大火后小火', { fs: 19 })}${T(562, 262, '番茄炒蛋：先炒蛋', { fs: 19 })}${T(562, 296, '盐 2 克', { fs: 19 })}${T(562, 330, '出锅撒葱花', { fs: 19 })}`)}
+  ${g('2', `${tag(830, 250, '肉多？肉少？', C.orange)}${tag(830, 310, '锅大？锅小？', C.orange)}${tag(830, 370, '四川：多放辣', C.orange)}${tag(830, 430, '广东：要清淡', C.orange)}`)}
+  ${g('3', `${T(540, 440, '第 100,000 页……', { fs: 30, w: 700, c: C.red, anchor: 'middle' })}`)}
+  ${g('4', `<path class="ink rough" d="M320 230 L760 500 M760 230 L320 500" style="stroke:${C.red};stroke-width:6"/>`)}
+  ${g('3', `<g transform="translate(150 430) scale(1.1)"><text x="44" y="-44" font-size="34" font-weight="700" style="fill:${C.orange}">?</text></g>`)}` });
+
+S.push({ kicker: '第一节 · 从例子中学', card: ['机器学习', '不教规则，从大量例子中学', '大模型里：自己猜、自己对比、自己调整'], cardAt: 3, steps: [
+  '那就不写菜谱了。',
+  '让学徒自己做，做完和师傅的菜比一比。',
+  '差了，就改改做法，再做下一道。',
+  '这就是机器学习：不教规则，给大量例子，让它自己猜、自己对比、自己调整。'], svg: `
+  ${g('0-0', `<path class="ink rough" d="M520 220 h240 v200 h-240 z" fill="#fff"/>${T(640, 330, '菜谱', { fs: 34, w: 700, anchor: 'middle' })}<path class="ink rough" d="M500 200 L780 440 M780 200 L500 440" style="stroke:${C.red};stroke-width:6"/>`)}
+  ${g('1', `${chef(220, 360, 1.3)}${dish(470, 380, C.blue, 0, 150)}${T(470, 440, '学徒的菜', { fs: 22, c: C.blue, anchor: 'middle', w: 500 })}
+    ${T(600, 395, '≠', { fs: 54, c: C.red, anchor: 'middle', w: 700 })}${dish(740, 380, C.green, 2, 150)}${T(740, 440, '师傅的菜', { fs: 22, c: C.green, anchor: 'middle', w: 500 })}
+    ${T(605, 320, '比一比', { fs: 26, cls: 'hand', c: C.soft, anchor: 'middle' })}`)}
+  ${g('2', `<path class="ink rough draw" pathLength="1" d="M760 300 Q560 120 230 250" style="stroke:${C.orange}"/>${arrow(250, 236, 228, 254, C.orange)}${T(500, 170, '改一改，再做一道', { fs: 30, cls: 'hand', c: C.orange, anchor: 'middle' })}`)}` });
+
+S.push({ kicker: '第一节 · 参数', card: ['参数', '模型里的 n 个数字，学习就是调整它们', '大模型里：几千亿个，同一组参数要应付所有句子'], cardAt: 3, steps: [
+  '学徒做菜靠手感：盐放几克、糖放几克、火多大、炒多久。',
+  '这些都是数字。学徒学习，就是在改这些数字。',
+  '而且学徒只有一份手感，要做所有的菜。',
+  '这就是参数：模型里存着 n 个数字，学习就是调整它们。',
+  '大模型的参数有几千亿个，同一组参数要应付所有的句子。'], svg: `
+  ${g('0-3', `${chef(130, 380, 1.1)}
+    ${box(250, 150, 560, 300)}${T(530, 135, '学徒的手感', { fs: 22, w: 700, anchor: 'middle' })}
+    ${[['盐', '0:translateY(30px);1:translateY(-20px)', '2 克'], ['糖', '0:translateY(-30px);1:translateY(10px)', '14 克'], ['火候', '0:translateY(0px);1:translateY(-50px)', '4 档'], ['时间', '0:translateY(40px);1:translateY(-10px)', '7 分'], ['醋', '0:translateY(10px);1:translateY(40px)', '4 毫升'], ['酱油', '0:translateY(-40px);1:translateY(0px)', '12 毫升']]
+      .map(([l, tf, v], i) => slider(310 + i * 88, 180, 180, l, tf, v)).join('')}
+    ${g('1', T(530, 490, '都是数字', { fs: 30, cls: 'hand', c: C.blue, anchor: 'middle' }))}`)}
+  ${g('2-3', `${T(300, 560, '所有的菜：', { fs: 18, c: C.soft })}${[0, 1, 2, 3, 0, 1].map((v, i) => dish(440 + i * 74, 553, C.ink, v, 60)).join('')}`)}
+  ${g('4', (() => { let s = ''; for (let r = 0; r < 12; r++) for (let c = 0; c < 34; c++) s += `<circle cx="${180 + c * 24}" cy="${150 + r * 30}" r="3" fill="${(r * 7 + c * 3) % 11 ? C.blue : C.orange}" opacity=".75"/>`;
+    return s + `<rect x="410" y="268" width="320" height="76" rx="12" fill="#fff" stroke="${C.blue}" stroke-width="2"/>${T(570, 320, '几千亿个', { fs: 40, w: 700, c: C.blue, anchor: 'middle' })}`; })())}` });
+
+S.push({ kicker: '第二节 · 标准答案', card: ['标准答案', '原文里真实的下一个字', '大模型里：不需要人标注，这叫自监督学习'], cardAt: 3, steps: [
+  '学徒要对比，得有标准。',
+  '好在师傅做好的菜有成千上万道，直接拿来比。',
+  '对应到大模型：拿一句现成的话，遮住最后一个字，让它猜。',
+  '原文里的那个字，就是标准答案，不用人去标注。',
+  '所以整个互联网的文字都能拿来学。这种自己给自己出题的方式，叫自监督学习。'], svg: `
+  ${T(70, 130, '要对比，得有标准', { fs: 34, w: 700 })}
+  ${g('1', `${[0, 1, 2, 3, 0, 1, 2, 3].map((v, i) => dish(120 + i * 92, 220, C.green, v, 80)).join('')}${T(70, 280, '师傅做好的菜：成千上万道', { fs: 20, c: C.green, w: 500 })}`)}
+  ${g('2', `${box(70, 320, 560, 80)}${T(96, 374, '红烧肉要先把糖炒出', { fs: 34, w: 700 })}`)}
+  ${g('2-2', `<rect x="430" y="336" width="44" height="48" rx="4" fill="#DADDD6" stroke="${C.ink}" stroke-width="2"/>${T(452, 371, '?', { fs: 30, w: 700, anchor: 'middle' })}${T(490, 371, '← 遮住', { fs: 20, c: C.red })}`)}
+  ${g('3', `${T(452, 374, '色', { fs: 34, w: 700, c: C.green, anchor: 'middle' })}${T(490, 371, '← 标准答案', { fs: 20, c: C.green, w: 500 })}`)}
+  ${g('4', `${[...Array(10)].map((_, i) => `<rect class="rough" x="${80 + i * 46}" y="440" width="32" height="42" rx="3" fill="#fff" stroke="${C.ink}" stroke-width="1.8"/><path d="M${86 + i * 46} 452 h20 M${86 + i * 46} 461 h20 M${86 + i * 46} 470 h14" stroke="${C.soft}" stroke-width="1.5"/>`).join('')}${T(560, 470, '整个互联网的文字', { fs: 22, w: 700 })}`)}` });
+
+S.push({ kicker: '第二节 · 打分', card: ['损失函数 / 错误分', '损失函数：打分的规则，由人选定', '错误分：按规则算出的分数，越低越好，0 表示完全一样'], cardAt: 4, steps: [
+  '学徒做完一道菜，放进一台仪器。',
+  '仪器测出它和师傅的菜差多少，给一个分数。',
+  '差得越多，分数越高；一模一样，就是 0。',
+  '注意，“差多少算多差”是人事先定好的，仪器只按标准去测。',
+  '这就是损失函数：打分的规则，由人选定。算出来的分数，叫错误分。'], svg: `
+  ${dish(150, 230, C.blue, 0, 130)}${T(150, 285, '学徒的菜', { fs: 20, c: C.blue, anchor: 'middle' })}
+  ${dish(150, 400, C.green, 2, 130)}${T(150, 455, '师傅的菜', { fs: 20, c: C.green, anchor: 'middle' })}
+  ${arrow(230, 250, 380, 320)}${arrow(230, 390, 380, 340)}
+  ${gauge(540, 360, 140, '0:rotate(0deg);1:rotate(165deg);2:rotate(0deg)', '测味道的仪器')}
+  ${g('1', `${T(540, 440, '错误分 ', { fs: 30, w: 700, anchor: 'middle', extra: 'data-txt="1:错误分 4.6;2:错误分 0"' })}`)}
+  ${g('2-2', `${tag(390, 170, '差得越多 → 分越高', C.red, 18)}${tag(570, 170, '一模一样 → 0', C.green, 18)}`)}
+  ${g('3', `<circle cx="830" cy="200" r="16" fill="none" stroke="${C.ink}" stroke-width="3"/><path class="ink" d="M830 216 v40 M830 228 l-18 14 M830 228 l18 14 M830 256 l-14 26 M830 256 l14 26"/>
+    ${T(860, 205, '人定的', { fs: 24, cls: 'hand', c: C.orange })}${box(770, 300, 150, 52, C.orange, '#FFF6E8')}${T(845, 334, '打分规则', { fs: 22, w: 700, anchor: 'middle' })}${arrow(845, 290, 845, 268, C.orange)}${arrow(760, 326, 690, 336, C.orange)}`)}` });
+
+S.push({ kicker: '第二节 · 大模型怎么打分', card: 'keep', steps: [
+  '在大模型里，错误分看的是：给正确答案打了多少把握。',
+  '给“色”百分之百的把握，错误分是 0。',
+  '只给 20%，错误分就高；几乎没想到，错误分会特别高。',
+  '这个公式叫“交叉熵”，全部由程序自动算。'], svg: `
+  ${T(70, 130, '错误分看的是：给正确答案“色”打了多少把握', { fs: 28, w: 700 })}
+  ${T(110, 190, '给“色”的把握', { fs: 18, c: C.soft })}${T(470, 190, '错误分', { fs: 18, c: C.soft })}
+  ${[[100, '0.0'], [90, '0.1'], [50, '0.7'], [20, '1.6'], [1, '4.6']].map(([p, e], i) => g(i ? '2' : '1', `
+    ${T(170, 240 + i * 62, p + '%', { fs: 26, w: 700, anchor: 'end' })}
+    <rect class="rough" x="190" y="${218 + i * 62}" width="${Math.max(3, p * 2.4)}" height="28" rx="3" fill="#DDE6FB" stroke="${C.blue}" stroke-width="2"/>
+    <rect class="rough" x="470" y="${218 + i * 62}" width="${Math.max(3, +e * 62)}" height="28" rx="3" fill="#F7DCD9" stroke="${C.red}" stroke-width="2"/>
+    ${T(482 + Math.max(3, +e * 62), 241 + i * 62, e, { fs: 24, w: 700, c: i ? C.red : C.green })}`)).join('')}
+  ${g('2', T(850, 498, '越接近 0%，罚得越重', { fs: 24, cls: 'hand', c: C.red }))}
+  ${g('3', tag(850, 548, '公式：交叉熵（程序自动算）', C.blue, 18))}` });
+
+S.push({ kicker: '第二节 · 有的菜做不准', card: ['明确 vs 模糊', '有的句子答案唯一，有的不唯一', '大模型里：模糊的地方只能给概率，不可能 100% 准确'], cardAt: 3, steps: [
+  '有的菜能做准，有的菜做不准。',
+  '宫保鸡丁，各家做法差不多，学徒能做得和师傅几乎一样。',
+  '家常豆腐不同，每个师傅做法都不一样，学徒怎么做都不可能和所有人一样。',
+  '对应到大模型：“疑是地上”后面，几乎只能是“霜”。',
+  '而“我想吃”后面，可以是火锅、面、饭，模型只能给出合理的比例。',
+  '所以模型不可能百分之百准确。不是没学好，是语言本身就有很多种合理的说法。'], svg: `
+  ${T(230, 150, '宫保鸡丁', { fs: 32, w: 700, anchor: 'middle' })}${T(620, 150, '家常豆腐', { fs: 32, w: 700, anchor: 'middle' })}
+  ${line(425, 120, 425, 520, C.soft, 2, 'stroke-dasharray="6 8"')}
+  ${g('1', `${T(40, 222, '师傅们', { fs: 16, c: C.green })}${[0, 0, 0].map((v, i) => dish(140 + i * 92, 215, C.green, 0, 80)).join('')}${dish(230, 300, C.blue, 0, 90)}${T(230, 345, '学徒', { fs: 18, c: C.blue, anchor: 'middle' })}<path class="ink" d="M290 296 l10 12 l22 -26" style="stroke:${C.green};stroke-width:4"/>`)}
+  ${g('2', `${[1, 2, 3].map((v, i) => dish(530 + i * 92, 215, C.green, v, 80)).join('')}${dish(620, 300, C.blue, 0, 90)}${T(620, 345, '学徒', { fs: 18, c: C.blue, anchor: 'middle' })}${T(684, 312, '?', { fs: 36, w: 700, c: C.orange })}`)}
+  ${g('3', `${T(60, 430, '“疑是地上” →', { fs: 24 })}${T(260, 430, '霜 98%', { fs: 26, w: 700, c: C.green })}`)}
+  ${g('4', `${T(450, 430, '“我想吃” →', { fs: 24 })}${T(590, 430, '火锅 30%｜面 25%｜饭 20%…', { fs: 22, w: 700, c: C.blue })}`)}
+  ${g('5', `${T(425, 500, '不可能 100% 准确', { fs: 32, w: 700, anchor: 'middle' })}<path class="ink rough" d="M300 512 Q425 522 550 510" style="stroke:#F2C230;stroke-width:8;opacity:.8"/>`)}` });
+
+S.push({ kicker: '第二节 · 最低点', card: ['最低点', '让总错误分最小的那组参数', '大模型里：训练的目标；它的错误分不会是 0'], cardAt: 3, interactive: 'minimum', steps: [
+  '学徒只有一份手感，要做所有的菜。',
+  '为了让宫保鸡丁更像，可能让家常豆腐差一点。拖一下下面的手感试试。',
+  '最好的手感，是所有菜加起来总差距最小的那一份。',
+  '把手感和总差距画出来，就像一座山。山的最低处，就是最低点。',
+  '真实的大模型，这座山有几千亿个方向，道理一样。',
+  '因为有家常豆腐这种菜，最低点的总差距也不会是 0。'], svg: `
+  ${chef(130, 260, 1.1)}
+  ${g('1', `${gauge(330, 200, 70, '0:rotate(40deg)', '宫保鸡丁')}<text id="m-e1" x="330" y="256" text-anchor="middle" font-size="22" style="font-weight:700">0.00</text>
+    ${gauge(330, 360, 70, '0:rotate(90deg)', '家常豆腐')}<text id="m-e2" x="330" y="416" text-anchor="middle" font-size="22" style="font-weight:700">0.00</text>`)}
+  ${g('2', `<rect x="236" y="436" width="190" height="36" rx="8" fill="#FFF6D6" stroke="#E2B53A" stroke-width="1.6"/><text id="m-tot" x="331" y="461" text-anchor="middle" font-size="20" style="font-weight:700">总差距 0.00</text>`)}
+  ${g('3', `${line(500, 120, 500, 470, C.ink, 2.4)}${line(500, 470, 860, 470, C.ink, 2.4)}${T(506, 116, '总差距', { fs: 15, c: C.soft })}${T(860, 494, '手感', { fs: 15, c: C.soft, anchor: 'end' })}
+    <path id="m-curve" class="ink rough" d=""/><line id="m-low" x1="0" y1="0" x2="0" y2="470" stroke="${C.green}" stroke-width="2" stroke-dasharray="5 6"/>
+    <text id="m-lowt" x="0" y="494" text-anchor="middle" font-size="16" style="fill:${C.green};font-weight:700">最低点</text>
+    <circle id="m-dot" r="9" fill="${C.blue}"/>`)}
+  ${g('4', tag(560, 150, '真实的山：几千亿个方向', C.blue, 16))}
+  ${g('5', `<path id="m-zero" stroke="${C.red}" stroke-width="3"/><text id="m-zerot" font-size="20" style="fill:${C.red};font-weight:700">≠ 0</text>`)}` });
+
+S.push({ kicker: '了解即可 · 过拟合', card: ['过拟合', '把练习题背下来了，新题却不会', '大模型里：用没见过的测试集来检验'], cardAt: 2, aside: true, steps: [
+  '了解一下：如果学徒把练过的菜都背得一模一样，仪器会打 0 分。',
+  '可来了一道没做过的新菜，它就不会了。',
+  '这叫过拟合：背下来不等于学会。所以要留一部分没见过的文字专门检验，叫测试集。'], svg: `
+  ${chef(150, 330, 1.2, 'smile')}
+  ${box(250, 180, 120, 110)}${T(310, 220, '背', { fs: 28, w: 700, anchor: 'middle' })}${line(270, 245, 350, 245, C.soft, 2)}${line(270, 265, 340, 265, C.soft, 2)}
+  ${gauge(560, 390, 110, '0:rotate(0deg);1:rotate(160deg)')}
+  ${T(560, 460, '', { fs: 28, w: 700, anchor: 'middle', extra: 'data-txt="0:练过的菜：0 分;1:没见过的新菜：很高"' })}
+  ${g('1', `${dish(310, 440, C.ink, 3, 110)}${T(310, 490, '新菜', { fs: 18, c: C.orange, anchor: 'middle', w: 500 })}`)}
+  ${g('1', `<g transform="translate(150 330) scale(1.2)"><rect x="-30" y="-24" width="60" height="30" fill="#FFF4DA"/><use href="#face-q"/></g>`)}
+  ${g('2', tag(430, 535, '测试集：考试时用没见过的题', C.blue, 17))}` });
+
+S.push({ kicker: '第三节 · 梯度下降', card: ['梯度下降', '每个参数试着动一点，往错误分变小的方向改', '大模型里：变化越明显的参数，改得越多'], cardAt: 4, steps: [
+  '知道差多少了，手感怎么改？学徒的办法是：一样一样试。',
+  '盐多放一点，送进仪器：分数降了，说明方向对，往加盐的方向改。',
+  '糖多放一点：分数反而升了，方向反了，那就少放糖。',
+  '火候动一动，分数几乎不变，说明关系不大，少改或不改。',
+  '所有调料同时改一小步。这就是梯度下降。'], svg: `
+  ${chef(120, 360, 1.1)}
+  ${slider(260, 170, 230, '盐', '0:translateY(0px);1:translateY(-40px)')}
+  ${slider(370, 170, 230, '糖', '0:translateY(0px);2:translateY(-40px);4:translateY(30px)')}
+  ${slider(480, 170, 230, '火候', '0:translateY(0px);3:translateY(-30px);4:translateY(-30px)')}
+  ${gauge(760, 380, 150, '0:rotate(110deg);1:rotate(85deg);2:rotate(118deg);3:rotate(86deg);4:rotate(55deg)')}
+  ${T(760, 450, '错误分 1.65', { fs: 28, w: 700, anchor: 'middle', extra: 'data-txt="0:错误分 1.65;1:错误分 1.35;2:错误分 1.80;3:错误分 1.36;4:错误分 1.05"' })}
+  ${g('1-1', `${arrow(225, 300, 225, 230, C.green, 3)}${T(160, 150, '降了 ✓ 往这边改', { fs: 22, c: C.green, w: 700 })}`)}
+  ${g('2-2', `${arrow(335, 300, 335, 230, C.red, 3)}${T(300, 150, '升了 ✗ 反方向改', { fs: 22, c: C.red, w: 700 })}`)}
+  ${g('3-3', `${T(430, 150, '≈ 关系不大', { fs: 22, c: C.soft, w: 700 })}`)}
+  ${g('4', tag(250, 470 + 80, '所有调料一起改一小步', C.blue, 18))}` });
+
+const hillA = (x) => 470 - 300 * Math.pow((x - 760) / 640, 2);
+const hillY = hillA;
+const slope = (x) => -600 * (x - 760) / 640 / 640;
+const hops = [140, 330, 480, 590, 668, 718, 746, 760];
+let hopPath = `M${hops[0]} ${hillY(hops[0]) - 14}`;
+for (let i = 1; i < hops.length; i++) { const a = hops[i - 1], b = hops[i]; hopPath += ` Q${(a + b) / 2} ${Math.min(hillY(a), hillY(b)) - 50} ${b} ${hillY(b) - 14}`; }
+S.push({ kicker: '第三节 · 蒙眼下山', card: 'keep', steps: [
+  '每个参数动一点，错误分变化的方向和快慢，叫梯度，就像山坡的坡度。',
+  '就像蒙着眼睛下山：看不见谷底，但能感觉到脚下哪边是下坡。',
+  '往下坡迈一步，再感觉，再迈一步，直到谷底。每一步，就是改一次调料。'], svg: `
+  <path class="ink rough" d="${pathFrom(hillY, 120, 1180)}"/>
+  ${T(110, 130, '错误分 ↑', { fs: 16, c: C.soft })}${T(110, 560, '参数的取值 →', { fs: 16, c: C.soft })}
+  ${g('0-0', `<circle cx="160" cy="${hillY(160)}" r="12" fill="${C.orange}"/><path d="M90 ${hillY(160) - 70 * slope(160)} L260 ${hillY(160) + 100 * slope(160)}" stroke="${C.blue}" stroke-width="2.5" stroke-dasharray="8 7"/>${T(250, 250, '坡度（梯度）', { fs: 22, c: C.blue, w: 700 })}`)}
+  ${g('1-1', `<g transform="translate(150 ${hillY(150) - 70}) scale(.8)"><use href="#chef-body"/><use href="#face-blind"/></g>${T(240, 150, '看不见，但脚下能感觉到坡', { fs: 24, cls: 'hand', c: C.orange })}`)}
+  ${g('2', `<path d="${hopPath}" fill="none" stroke="${C.orange}" stroke-width="2" stroke-dasharray="3 7" opacity=".7"/>
+    <g><circle r="13" fill="${C.orange}" stroke="${C.ink}" stroke-width="2"><animateMotion dur="4s" fill="freeze" begin="indefinite" path="${hopPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear"/></circle></g>
+    ${T(800, 300, '每一步 = 改一次调料', { fs: 26, w: 700, c: C.orange })}${T(760, hillY(760) + 40, '谷底', { fs: 18, c: C.green, anchor: 'middle', w: 700 })}`, 'data-play="2"')}` });
+
+const U = (cx) => (x) => 290 + 230 * (1 - Math.pow((x - cx) / 120, 2));
+const uPath = (cx) => pathFrom(U(cx), cx - 120, cx + 120, 40);
+const hopsOn = (cx, xs, lift = 50) => { const f = U(cx); let d = `M${xs[0]} ${f(xs[0]) - 10}`; for (let i = 1; i < xs.length; i++) { const a = xs[i - 1], b = xs[i]; d += ` Q${(a + b) / 2} ${Math.min(f(a), f(b)) - lift} ${b} ${f(b) - 10}`; } return d; };
+const lrSmall = hopsOn(200, [95, 101, 107, 113, 119, 125, 131, 137], 14);
+const lrGood = hopsOn(560, [455, 505, 540, 556, 560]);
+const lrBig = hopsOn(920, [815, 1015, 818, 1035]) + ' Q1070 250 1100 230';
+const ball = (p, c) => `<path d="${p}" fill="none" stroke="${c}" stroke-width="1.6" stroke-dasharray="3 6" opacity=".7"/><circle r="11" fill="${C.orange}" stroke="${C.ink}" stroke-width="2"><animateMotion dur="3s" fill="freeze" begin="indefinite" path="${p}"/></circle>`;
+S.push({ kicker: '第三节 · 学习率', card: ['学习率', '每一步改多少', '大模型里：太大来回震荡甚至越调越差，太小训练很慢'], cardAt: 3, steps: [
+  '每次改多少，也有讲究。',
+  '改太少：每次加一粒盐，要调到天黑。',
+  '改太多：太淡了猛加盐，结果太咸；又猛减，又太淡，越调越差。',
+  '这就是学习率：每一步改多少。太大会来回震荡，太小学得很慢。'], svg: `
+  ${[[200, '改太少', C.blue], [560, '刚刚好', C.green], [920, '改太多', C.red]].map(([cx, t, c]) => `<path class="ink rough" d="${uPath(cx)}"/>${T(cx, 250, t, { fs: 28, w: 700, c, anchor: 'middle' })}`).join('')}
+  ${g('1', `${ball(lrSmall, C.blue)}${T(200, 560, '走了半天还没到', { fs: 20, c: C.soft, anchor: 'middle' })}`, 'data-play="1"')}
+  ${g('2', `${ball(lrBig, C.red)}${T(920, 560, '被甩出去了！', { fs: 22, c: C.red, anchor: 'middle', w: 700 })}`, 'data-play="2"')}
+  ${g('3', `${ball(lrGood, C.green)}${T(560, 560, '几步就到谷底', { fs: 22, c: C.green, anchor: 'middle', w: 700 })}`, 'data-play="3"')}` });
+
+const loopP = 'M640 150 L880 300 L640 450 L400 300 Z';
+const node = (x, y, t, sub) => `${box(x - 100, y - 36, 200, 72)}${T(x, y - 4, t, { fs: 22, w: 700, anchor: 'middle' })}${T(x, y + 22, sub, { fs: 14, c: C.blue, anchor: 'middle' })}`;
+S.push({ kicker: '第三节 · 训练', card: ['训练 / 预训练', '做、打分、调整，重复无数次', '预训练：用海量文字练“猜下一个字”，把几千亿个参数调好'], cardAt: 4, steps: [
+  '学徒的一天：接单做菜，仪器打分，按分数改一点手感，再做下一道。',
+  '大模型的训练也一样：拿一段文字，遮住下一个字；',
+  '用当前的参数猜；和原文对比，算出错误分；',
+  '所有参数往错误分变小的方向改一小步，换下一段。',
+  '这个循环重复几万亿次，几千亿个参数慢慢调好，这就叫训练。',
+  '用海量文字练“猜下一个字”的阶段，叫预训练。',
+  '所以“模型学会了”，就是参数被调到了错误分很低的位置。'], svg: `
+  ${arrow(720, 190, 800, 250, C.soft)}${arrow(800, 350, 720, 410, C.soft)}${arrow(560, 410, 480, 350, C.soft)}${arrow(480, 250, 560, 190, C.soft)}
+  ${node(640, 150, '点单', '')}${node(880, 300, '学徒做菜', '')}${node(640, 450, '仪器打分', '')}${node(400, 300, '调手感', '')}
+  ${g('1', T(640, 172, '拿一段文字，遮住下一个字', { fs: 14, c: C.blue, anchor: 'middle' }))}
+  ${g('2', `${T(880, 322, '模型用当前参数猜', { fs: 14, c: C.blue, anchor: 'middle' })}${T(640, 472, '和原文对比，算错误分', { fs: 14, c: C.blue, anchor: 'middle' })}`)}
+  ${g('3', T(400, 322, '参数往下坡改一小步', { fs: 14, c: C.blue, anchor: 'middle' }))}
+  ${g('4', `${T(640, 312, '几万亿次', { fs: 34, w: 700, anchor: 'middle' })}<circle r="10" fill="${C.orange}"><animateMotion dur="2.4s" repeatCount="indefinite" begin="indefinite" path="${loopP}"/></circle>`, 'data-play="4"')}
+  ${g('6', tag(640, 560, '学会了 = 参数被调到错误分很低的位置', C.blue, 18, 'middle'))}` });
+
+const dips = [[260, 120, 42], [520, 250, 60], [770, 170, 46], [980, 110, 40]];
+const wavy = (x) => 180 + dips.reduce((s, [c, d, w]) => s + d * Math.exp(-Math.pow((x - c) / w, 2)), 0);
+const along = (x0, x1, n = 40) => pathFrom((x) => wavy(x) - 11, x0, x1, n);
+S.push({ kicker: '了解即可 · 局部最低点', card: ['局部最低点', '停在了一个不是最低的坑', '大模型里：加上惯性能冲过小坑；找到的坑通常足够低'], cardAt: 2, aside: true, steps: [
+  '了解一下：学徒可能调到一种口味，往哪边微调都变差，就停住了。',
+  '其实换一套完全不同的做法，可能更好吃。',
+  '这叫局部最低点：山上不止一个坑。训练时加上“惯性”，能冲过小坑。好在大模型找到的坑，通常已经够低。'], svg: `
+  <path class="ink rough" d="${pathFrom(wavy, 60, 760, 160)}" transform="translate(0 0)"/>
+  ${g('0', `<circle cx="260" cy="${wavy(260) - 11}" r="11" fill="${C.blue}" stroke="${C.ink}" stroke-width="2"/>${T(200, wavy(260) + 50, '停住了', { fs: 22, c: C.blue, w: 700 })}`)}
+  ${g('1', `${line(520, wavy(520) + 8, 520, 470, C.green, 2, 'stroke-dasharray="5 6"')}${T(520, 496, '最深的坑', { fs: 20, c: C.green, anchor: 'middle', w: 700 })}`)}
+  ${g('2', `<circle r="11" fill="${C.orange}" stroke="${C.ink}" stroke-width="2"><animateMotion dur="3.2s" fill="freeze" begin="indefinite" path="${along(120, 520, 80)}"/></circle>${T(70, 528, '橙色：加了惯性，冲过小坑', { fs: 20, c: C.orange, w: 700 })}`, 'data-play="2"')}` });
+
+const RECAP = [['学徒的手感', '参数'], ['师傅做好的菜', '标准答案（原文里的下一个字）'], ['测味道的仪器', '损失函数 / 错误分'], ['所有菜总差距最小的手感', '最低点'], ['每样调料试一试，往对的方向改', '梯度下降'], ['每次改多少', '学习率'], ['做菜、打分、改手感，日复一日', '训练']];
+const recapAt = [1, 1, 2, 2, 3, 3, 4];
+S.push({ kicker: '回顾', steps: [
+  '回顾一下学徒的故事。',
+  '学徒的手感，是参数；师傅做好的菜，是标准答案。',
+  '测味道的仪器，是损失函数；所有菜总差距最小的手感，是最低点。',
+  '每样调料加一点试试，往对的方向改，是梯度下降；每次改多少，是学习率。',
+  '做菜、打分、改手感，日复一日，就是训练。'], svg: `
+  ${T(640, 110, '学徒做菜  ↔  大模型', { fs: 34, anchor: 'middle', cls: 'disp' })}
+  ${RECAP.map(([a, b], i) => g(String(recapAt[i]), `<rect x="250" y="${140 + i * 58}" width="780" height="46" rx="8" fill="#fff" stroke="#D9DDD6" stroke-width="1.5"/>
+    ${T(280, 171 + i * 58, a, { fs: 21 })}${T(640, 171 + i * 58, '→', { fs: 21, c: C.soft, anchor: 'middle' })}${T(680, 171 + i * 58, b, { fs: 21, w: 700, c: C.blue })}`)).join('')}` });
+
+S.push({ kicker: '下一课', card: ['下一课', '神经网络', '菜做砸了，怎么马上知道该怪哪个工位'], cardAt: 3, steps: [
+  '还有一个问题：学徒只有几十种调料，可以一样一样试。',
+  '大模型有几千亿个参数，每个都试一下，永远也试不完。',
+  '而且，学徒的手感在里面到底是怎么组织的？',
+  '下一课走进厨房流水线：神经网络是什么，菜做砸了，怎么马上知道该怪哪个工位。'], svg: `
+  ${g('0-1', `${chef(140, 340, 1.1)}${[...Array(6)].map((_, i) => slider(270 + i * 60, 220, 150, '', `0:translateY(${[20, -30, 0, 30, -10, 15][i]}px)`)).join('')}${T(420, 190, '几十种调料：一样一样试', { fs: 22, w: 700, anchor: 'middle' })}`)}
+  ${g('1-1', (() => { let s = ''; for (let r = 0; r < 14; r++) for (let c = 0; c < 22; c++) s += `<circle cx="${640 + c * 22}" cy="${150 + r * 26}" r="2.6" fill="${(r + c * 5) % 9 ? C.blue : C.orange}" opacity=".7"/>`;
+    return s + `<rect x="740" y="268" width="260" height="70" rx="12" fill="#fff" stroke="${C.red}" stroke-width="2"/>${T(870, 316, '永远也试不完', { fs: 32, w: 700, c: C.red, anchor: 'middle' })}`; })())}
+  ${g('2', `${[0, 1, 2, 3].map((i) => `${box(110 + i * 200, 300, 140, 100)}${T(180 + i * 200, 358, '工位 ' + (i + 1), { fs: 22, anchor: 'middle' })}${i < 3 ? arrow(256 + i * 200, 350, 304 + i * 200, 350, C.soft) : ''}`).join('')}${line(90, 430, 910, 430, C.soft, 2.4)}${T(500, 270, '?', { fs: 54, w: 700, c: C.orange, anchor: 'middle' })}`)}
+  ${g('3', T(500, 520, '下一课：神经网络', { fs: 40, w: 700, c: C.blue, anchor: 'middle', cls: 'disp' }))}` });
+
+// ───── 引擎 ─────
+const stage = document.getElementById('stage');
+stage.innerHTML = S.map((s, i) => `<section class="slide" data-i="${i}">${s.aside ? '<div class="aside"></div>' : ''}<svg viewBox="0 0 1280 600">${s.svg}</svg>
+  ${s.kicker ? `<div class="kicker">${s.kicker}</div>` : ''}${s.card ? `<div class="card"></div>` : ''}${s.interactive === 'minimum' ? `<label class="slider-ui" data-s="1"><span>拖动：学徒的手感</span><input id="m-x" type="range" min="0" max="100" value="22"></label>` : ''}
+  <div class="narr"><span></span></div></section>`).join('');
+const slides = [...stage.querySelectorAll('.slide')];
+
+// 概念卡：'keep' 沿用上一张已出现的卡
+let prevCard = null;
+S.forEach((s, i) => {
+  if (s.card === 'keep') { s.cardInfo = prevCard; s.cardAt = 0; }
+  else if (s.card) { s.cardInfo = s.card; prevCard = s.card; }
+  else { s.cardInfo = null; prevCard = null; }
+  const el = slides[i].querySelector('.card');
+  if (el && s.cardInfo) el.innerHTML = `<small>概念</small><b>${s.cardInfo[0]}</b><p>${s.cardInfo[1]}</p><p>${s.cardInfo[2]}</p>`;
+});
+
+const pick = (spec, step) => { let out = null; spec.split(';').forEach((kv) => { const k = kv.indexOf(':'); if (+kv.slice(0, k) <= step) out = kv.slice(k + 1); }); return out; };
+const inRange = (spec, step) => { const [a, b] = spec.split('-'); return step >= +a && (b === undefined ? true : step <= +b); };
+
+let cur = 0, step = 0, lastShown = { i: -1, s: -1 };
+function show() {
+  const s = S[cur], el = slides[cur];
+  slides.forEach((x, i) => x.classList.toggle('on', i === cur));
+  el.querySelectorAll('[data-s]').forEach((n) => { const v = inRange(n.dataset.s, step); n.classList.toggle('off', !v); n.classList.toggle('vis', v); });
+  el.querySelectorAll('[data-tf]').forEach((n) => { const v = pick(n.dataset.tf, step); n.style.transform = v || ''; });
+  el.querySelectorAll('[data-txt]').forEach((n) => { const v = pick(n.dataset.txt, step); if (v !== null) n.textContent = v; });
+  const forward = lastShown.i !== cur || step > lastShown.s;
+  el.querySelectorAll('[data-play]').forEach((n) => {
+    if (+n.dataset.play === step && (forward || lastShown.i !== cur)) n.querySelectorAll('animateMotion').forEach((a) => { try { a.beginElement(); } catch (e) {} });
+  });
+  const card = el.querySelector('.card');
+  if (card) card.classList.toggle('show', !!s.cardInfo && step >= (s.cardAt || 0));
+  const span = el.querySelector('.narr span');
+  if (span.textContent !== s.steps[step]) { span.textContent = s.steps[step]; span.classList.remove('fade'); void span.offsetWidth; span.classList.add('fade'); }
+  document.getElementById('count').textContent = `${cur + 1} / ${S.length}`;
+  document.getElementById('dots').innerHTML = s.steps.length > 1 ? s.steps.map((_, i) => `<i class="${i <= step ? 'done' : ''}"></i>`).join('') : '';
+  if (s.interactive === 'minimum') updateMin();
+  lastShown = { i: cur, s: step };
+  try { history.replaceState(null, '', '#s' + (cur + 1)); } catch (e) {}
+}
+function next() { if (step < S[cur].steps.length - 1) step++; else if (cur < S.length - 1) { cur++; step = 0; } show(); }
+function prev() { if (step > 0) step--; else if (cur > 0) { cur--; step = S[cur].steps.length - 1; } show(); }
+
+// 最低点那一页：拖动手感，两道菜的差距此消彼长，总差距画成一座山
+const e1 = (x) => 1.7 * Math.pow(x - .32, 2) + .06, e2 = (x) => 1.7 * Math.pow(x - .7, 2) + .26, tot = (x) => e1(x) + e2(x);
+const MX = (x) => 520 + x * 320, MY = (v) => 470 - (v / 1.6) * 330;
+let built = false;
+function updateMin() {
+  const el = slides[cur], inp = el.querySelector('#m-x');
+  const x = inp ? inp.value / 100 : .22;
+  if (!built) {
+    el.querySelector('#m-curve').setAttribute('d', pathFrom((t) => MY(tot((t - 520) / 320)), 520, 840, 60));
+    const xm = .51, lx = MX(xm);
+    const lo = el.querySelector('#m-low'); lo.setAttribute('x1', lx); lo.setAttribute('x2', lx); lo.setAttribute('y1', MY(tot(xm)));
+    el.querySelector('#m-lowt').setAttribute('x', lx);
+    el.querySelector('#m-zero').setAttribute('d', `M${lx + 24} ${MY(tot(xm))} L${lx + 24} 470`);
+    const zt = el.querySelector('#m-zerot'); zt.setAttribute('x', lx + 32); zt.setAttribute('y', (MY(tot(xm)) + 470) / 2 + 6);
+    built = true;
+  }
+  const n = (v) => Math.min(170, v / 1.2 * 180);
+  const gs = el.querySelectorAll('[data-tf]');
+  gs[0].style.transform = `rotate(${n(e1(x))}deg)`; gs[1].style.transform = `rotate(${n(e2(x))}deg)`;
+  el.querySelector('#m-e1').textContent = e1(x).toFixed(2);
+  el.querySelector('#m-e2').textContent = e2(x).toFixed(2);
+  el.querySelector('#m-tot').textContent = '总差距 ' + tot(x).toFixed(2);
+  const d = el.querySelector('#m-dot'); d.setAttribute('cx', MX(x)); d.setAttribute('cy', MY(tot(x)));
+}
+stage.addEventListener('input', (e) => { if (e.target.id === 'm-x') updateMin(); });
+
+stage.addEventListener('click', (e) => { if (e.target.closest('.slider-ui')) return; next(); });
+document.getElementById('next').addEventListener('click', next);
+document.getElementById('prev').addEventListener('click', prev);
+document.getElementById('fs').addEventListener('click', () => { const a = document.getElementById('app'); try { document.fullscreenElement ? document.exitFullscreen() : a.requestFullscreen().catch(() => {}); } catch (e) {} });
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+  if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+  if (e.key === 'Home') { cur = 0; step = 0; show(); }
+});
+let tx = null;
+stage.addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; }, { passive: true });
+stage.addEventListener('touchend', (e) => { if (tx === null || e.target.closest('.slider-ui')) return; const dx = e.changedTouches[0].clientX - tx; if (dx > 50) { prev(); e.preventDefault(); } tx = null; });
+
+function fit() {
+  const f = document.getElementById('frame'), k = Math.min(f.clientWidth / 1280, f.clientHeight / 720);
+  stage.style.transform = `scale(${k}) translate(-50%, -50%)`;
+}
+window.addEventListener('resize', fit);
+const m = /^#s(\d+)$/.exec(location.hash); if (m) cur = Math.min(S.length - 1, Math.max(0, +m[1] - 1));
+fit(); show();
+})();
+</script>
